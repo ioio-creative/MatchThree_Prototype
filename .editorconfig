@@ -1,0 +1,4 @@
+﻿[*.cs]
+
+# SCS0005: Weak random number generator.
+dotnet_diagnostic.SCS0005.severity = suggestion
