@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "Match-3/Block")]
+[CreateAssetMenu(menuName = "Match-3/BlockType")]
 public class BlockType : ScriptableObject
 {
     public int Value;
