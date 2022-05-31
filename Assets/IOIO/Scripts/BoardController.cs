@@ -53,6 +53,14 @@ public class BoardController : MonoBehaviour
         InitializeBoard(width, height, boardSeed);
     }
 
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.B))
+        {
+            SpawnBombsRandom(1);
+        }
+    }
+
     private void InitializeBoard(int width, int height, int seed)
     {
         ClearTiles();
@@ -122,6 +130,29 @@ public class BoardController : MonoBehaviour
     }
 
 
+    //BOMB: Turn blocks to bombs at random coordinates, may use differenct implementation to spawn bombs
+    private void SpawnBombsRandom(int n)
+    {
+        HashSet<Vector2Int> bombCoordinates = new HashSet<Vector2Int>();
+        for (int i = 0; i < n; i++)
+        {
+            Vector2Int bombCoord;
+            do
+            {
+                int x = UnityEngine.Random.Range(0, Tiles.GetLength(1));
+                int y = UnityEngine.Random.Range(0, Tiles.GetLength(0));
+                bombCoord = new Vector2Int(x, y);
+            } while (bombCoordinates.Contains(bombCoord));
+            bombCoordinates.Add(bombCoord);
+        }
+
+        foreach (var bombCoord in bombCoordinates)
+        {
+            Tiles[bombCoord.y, bombCoord.x].Occupant.TurnToBomb();
+            Debug.Log("Bomb spawned at (" + bombCoord.x + "," + bombCoord.y + ")");
+        }
+    }
+
     private bool AreCoordsAdjacent(Vector2Int a, Vector2Int b)
     {
         return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y) == 1 ? true : false;
@@ -131,7 +162,7 @@ public class BoardController : MonoBehaviour
     {
         SwapTiles(a, b);
 
-        var matchCoords = Tiles.FindMatches(3);
+        var matchCoords = Tiles.FindMatches(3, true);
 
         if (matchCoords.Count > 0)
         {
@@ -141,7 +172,7 @@ public class BoardController : MonoBehaviour
             bool chainReaction = false;
             do
             {
-                var chainMatches = Tiles.FindMatches(3);
+                var chainMatches = Tiles.FindMatches(3, true);
                 chainReaction = chainMatches.Count > 0;
 
                 if (chainReaction)

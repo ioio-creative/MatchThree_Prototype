@@ -8,12 +8,14 @@ public class BlockView : MonoBehaviour
     [SerializeField] private SpriteRenderer blockSprRenderer;
 
     public BlockType Type => blockdata;
+    public bool IsBomb { get; private set; }
     public Vector2Int Coordinates { get; private set; }
     public Vector2 Location { get; private set; }
 
     public void InitializeBlockView(BlockType type, Vector2Int initCoordinates)
     {
         blockdata = type;
+        IsBomb = false;
 
         blockSprRenderer.sprite = blockdata.BlockSprite;
 
@@ -21,6 +23,12 @@ public class BlockView : MonoBehaviour
         Location = BoardUtils.GetWorldPosFromTileCoord(Coordinates);
 
         transform.position = Location;
+    }
+
+    public void TurnToBomb()
+    {
+        IsBomb = true;
+        blockSprRenderer.sprite = blockdata.BombSprite;
     }
 
     public void UpdateCoordinates(Vector2Int targetCoord, float unitDuration = 0)

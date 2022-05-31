@@ -1,5 +1,5 @@
 
-using System;
+using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -24,9 +24,10 @@ public struct Tile
 
 public static class TileExtension
 {
-    public static HashSet<Vector2Int> FindMatches(this Tile[,] tiles, int matchCount)
+    public static HashSet<Vector2Int> FindMatches(this Tile[,] tiles, int matchCount, bool checkBombs = false)
     {
         HashSet<Vector2Int> matches = new HashSet<Vector2Int>();
+        HashSet<Vector2Int> bombMatches = new HashSet<Vector2Int>();
 
         //check for horizontal matches
         for (int y = 0; y < tiles.GetLength(0); y++)
@@ -37,6 +38,7 @@ public static class TileExtension
             for (int x = 1; x < tiles.GetLength(1); x++)
             {
                
+                //increment match counter until different type is checked
                 if (matchType != null && matchType == tiles[y, x].OccupantType) _matchCnt++;
                 else
                 {
@@ -48,6 +50,10 @@ public static class TileExtension
                         for (int x0 = x - 1; x0 >= x - _matchCnt; x0--)
                         {
                             matches.Add(tiles[y, x0].Coordinates);
+                            if (checkBombs && tiles[y, x0].Occupant.IsBomb)
+                            {
+                                bombMatches.Add(tiles[y, x0].Coordinates);
+                            }
                         }
                     }
                     _matchCnt = 1;
@@ -57,13 +63,17 @@ public static class TileExtension
                 }
             }
 
-            //in case last element per row is a match 
+            //in case last element per row is a match (no further different block type to trigger adding matches)
             if (_matchCnt >= matchCount)
             {
                 //backtracking adding to match hash set
                 for (int x0 = tiles.GetUpperBound(1); x0 > tiles.GetUpperBound(1) - _matchCnt; x0--)
                 {
                     matches.Add(tiles[y, x0].Coordinates);
+                    if (checkBombs && tiles[y, x0].Occupant.IsBomb)
+                    {
+                        bombMatches.Add(tiles[y, x0].Coordinates);
+                    }
                 }
             }
         }
@@ -87,6 +97,10 @@ public static class TileExtension
                         for (int y0 = y - 1; y0 >= y - _matchCnt; y0--)
                         {
                             matches.Add(tiles[y0, x].Coordinates);
+                            if (checkBombs && tiles[y0, x].Occupant.IsBomb)
+                            {
+                                bombMatches.Add(tiles[y0, x].Coordinates);
+                            }
                         }
                     }
                     _matchCnt = 1;
@@ -104,10 +118,64 @@ public static class TileExtension
                 for (int y0 = tiles.GetUpperBound(0); y0 > tiles.GetUpperBound(0) - _matchCnt; y0--)
                 {
                     matches.Add(tiles[y0, x].Coordinates);
+                    if (checkBombs && tiles[y0, x].Occupant.IsBomb)
+                    {
+                        bombMatches.Add(tiles[y0, x].Coordinates);
+                    }
                 }
             }
         }
 
+
+        HashSet<Vector2Int> _chainBombs = new HashSet<Vector2Int>();
+
+        do
+        {
+            _chainBombs.Clear();
+            foreach (var bomb in bombMatches)
+            {
+
+                var grid = Get8Adjacents(tiles, bomb);
+                foreach (var bombClear in grid)
+                {
+                    if (matches.Contains(bombClear)) continue;
+
+                    matches.Add(bombClear);
+                    if (tiles[bombClear.y, bombClear.x].Occupant.IsBomb)
+                    {
+                        _chainBombs.Add(bombClear);
+                    }
+                }
+            }
+            bombMatches.Clear();
+
+            foreach (var chainBombs in _chainBombs)
+            {
+                bombMatches.Add(chainBombs);
+            }
+        } while (_chainBombs.Count > 0);
+        
+
         return matches;
+    }
+
+    private static List<Vector2Int> Get8Adjacents(Tile[,] tiles, Vector2Int origin)
+    {    
+        var eightAdjacents =  new List<Vector2Int>
+        {
+            origin - Vector2Int.one,
+            origin + Vector2Int.down,
+            origin + Vector2Int.right + Vector2Int.down,
+            origin + Vector2Int.left,
+            origin + Vector2Int.right,
+            origin + Vector2Int.left + Vector2Int.up,
+            origin + Vector2Int.up,
+            origin + Vector2Int.one
+        };
+
+        int width = tiles.GetLength(1);
+        int height = tiles.GetLength(0);
+
+        return eightAdjacents.Where((v)=>v.x >= 0 && v.x < width && v.y >= 0 && v.y < height).ToList();
     }
 }
