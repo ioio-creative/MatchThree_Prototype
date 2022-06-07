@@ -138,6 +138,7 @@ public static class TileExtension
                 var grid = Get8Adjacents(tiles, bomb);
                 foreach (var bombClear in grid)
                 {
+                    if (tiles[bombClear.y, bombClear.x].Occupant == null) continue;
                     if (matches.Contains(bombClear)) continue;
 
                     matches.Add(bombClear);
