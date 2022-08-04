@@ -10,6 +10,7 @@ public class InputController : MonoBehaviour
     [SerializeField] private TileCursor cursor;
 
     private Vector2Int? selectedCoord;
+    private bool isCursorActive;
 
     private void Awake()
     {
@@ -29,8 +30,25 @@ public class InputController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Turns on/off whether InputController accepts input.
+    /// Will deselect any active cursor if turned off.
+    /// </summary>
+    /// <param name="value"></param>
+    public void SetCursorActive(bool value)
+    {
+        isCursorActive = value;
+        if (!isCursorActive)
+        {
+            cursor.Deselect();
+            selectedCoord = null;
+        }
+    }
+
     private bool CheckTileClick()
     {
+        if (!isCursorActive) return false;
+
         RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero, 100, mouseRaycastMask);
 
         if (hit.collider != null)
@@ -47,6 +65,7 @@ public class InputController : MonoBehaviour
         return false;
     }
 
+    //Callback function of this.OnTileClicked => BoardController.OnCoordSelectAck
     private void SelectTileAck(bool isSwap, Vector2Int coord)
     {
         if (!isSwap && selectedCoord != coord)
@@ -60,4 +79,5 @@ public class InputController : MonoBehaviour
             selectedCoord = null;
         }
     }
+
 }
